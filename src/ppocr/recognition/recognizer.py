@@ -11,7 +11,7 @@ from ppocr.models.mobilenet_v1 import MobileNetV1Enhance
 from ppocr.recognition.ctc_head import CTCHead
 from ppocr.recognition.svtr import EncoderWithSVTR
 from ppocr.types import OCRResult
-from ppocr.utils import download_file
+from ppocr.utils import maybe_download_github_asset
 
 
 class CTCPostProcessor:
@@ -87,6 +87,10 @@ weights_files = {
     "PP-OCRv3": "ch_ptocr_v3_rec_infer.pth",
 }
 
+vocab_file = {
+    "PP-OCRv3": "ppocr_keys_v1.txt",
+}
+
 
 class TextRecognizer:
     def __init__(
@@ -103,17 +107,18 @@ class TextRecognizer:
         if model_name not in weights_files:
             raise ValueError(f"Model {model_name} not found")
 
-        weights_file_path = download_file(
+        weights_file_path = maybe_download_github_asset(
             file_name=weights_files[model_name], output_dir=WEIGHTS_DIR
+        )
+        vocab_path = maybe_download_github_asset(
+            file_name=vocab_file[model_name], output_dir=WEIGHTS_DIR
         )
         self.model = PPOCRV3TextRecognizer()
         self.model.load_state_dict(
-            torch.load(weights_file_path, map_location=self.device)
+            torch.load(weights_file_path, map_location=self.device, weights_only=False)
         )
-
-        self.postprocess = CTCPostProcessor(
-            vocab_path=self.params.vocab_path, use_space_char=True
-        )
+        self.model.eval()
+        self.postprocess = CTCPostProcessor(vocab_path=vocab_path, use_space_char=True)
 
     def _preprocess(self, image: np.ndarray) -> torch.Tensor:
         image = cv2.resize(image, (self.model_width, self.model_height))

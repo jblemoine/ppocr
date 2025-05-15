@@ -11,7 +11,7 @@ from ppocr.detection.db_head import DBHead
 from ppocr.detection.db_postprocess import DBPostProcess
 from ppocr.models.mobilenet_v3 import MobileNetV3Det
 from ppocr.types import Box2D, Detection, Point2D
-from ppocr.utils import download_file
+from ppocr.utils import maybe_download_github_asset
 
 
 def _polygone_to_box2d(polygone: np.ndarray) -> Box2D:
@@ -104,14 +104,14 @@ class TextDetector:
         if model_name not in weights_files:
             raise ValueError(f"Model {model_name} not found")
 
-        weights_file_path = download_file(
+        weights_file_path = maybe_download_github_asset(
             file_name=weights_files[model_name], output_dir=WEIGHTS_DIR
         )
         self.model = PPOCRv3TextDetector()
         self.model.load_state_dict(
-            torch.load(weights_file_path, map_location=self.device)
+            torch.load(weights_file_path, map_location=self.device, weights_only=False)
         )
-
+        self.model.eval()
         self.postprocess = DBPostProcess(
             thresh=0.3,
             box_thresh=0.6,

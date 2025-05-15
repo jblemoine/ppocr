@@ -31,3 +31,6 @@ uv.lock
 
 # python version
 .python-version
+
+# weights
+weights/

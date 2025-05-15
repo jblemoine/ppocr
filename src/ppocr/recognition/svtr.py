@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from text_extraction.models.activation import Activation
-from text_extraction.models.mobilenet_v3 import ConvBNLayer
+
+from ppocr.models.activation import Activation
+from ppocr.models.mobilenet_v3 import ConvBNLayer
 
 # Part of the code, especially the Attention part might be cleaned and optimized
 
