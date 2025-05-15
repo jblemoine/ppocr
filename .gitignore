@@ -1,0 +1,33 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# ruff
+.ruff_cache/
+*.log
+
+# pytest
+.cache/
+*.pytest_cache/
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# mypy
+.mypy_cache/
+dmypy.json
+dmypy.sock
+
+# uv 
+uv.lock
+
+# python version
+.python-version
