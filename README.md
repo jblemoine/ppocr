@@ -44,6 +44,11 @@ for result in results:
 # ]
 ```
 
+# Credits
+
+- [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR)
+- [PaddleOCR2Pytorch](https://github.com/frotms/PaddleOCR2Pytorch)
+
 ## TODO
 
 - [] Add support for PP-OCRv4
