@@ -1,12 +1,12 @@
 # PPOCR
 
-PPOCR is a pytorch port of the [PP-OCR](https://paddlepaddle.github.io/PaddleOCR/latest/en/ppocr/overview.html) OCR model.
+PPOCR is a PyTorch implementation of the [PP-OCR](https://paddlepaddle.github.io/PaddleOCR/latest/en/ppocr/overview.html) model.
 
-PPOCR is a lightweight and fast OCR library developed by Baidu and originally written in PaddlePaddle.
+PP-OCR models, originally developed by Baidu as part of the PaddleOCR library and implemented in PaddlePaddle, are known for their speed and lightweight design. In my experience, they have outperformed other OCR solutions such as Tesseract.
 
-This library is a pytorch port of the original PPOCR model.
+This library provides a PyTorch-based version of the original PP-OCR model.
 
-It only supports the PP-OCRv3 model for now.
+Currently, only the PP-OCRv3 model is supported.
 
 ## Installation
 
