@@ -95,10 +95,10 @@ vocab_file = {
 class TextRecognizer:
     def __init__(
         self,
-        model_name: str = "PP-OCRv3",
-        device: str | None = None,
+        model_name: str,
+        device: str,
     ):
-        self.device = device or "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device
         self.model_height = 32
         self.model_width = 320
 

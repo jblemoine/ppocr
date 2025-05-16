@@ -28,7 +28,7 @@ class DBPostProcess:
         self.dilation_kernel = np.ones((2, 2), dtype=np.uint8)
 
     @staticmethod
-    def box_score(bitmap: np.ndarray, box_: np.ndarray) -> np.ndarray:
+    def box_score(bitmap: np.ndarray, box_: np.ndarray) -> float:
         """
         Compute the confidence score for a polygon : use bbox mean score as the mean score
         """
@@ -42,7 +42,7 @@ class DBPostProcess:
         mask = np.zeros((ymax - ymin + 1, xmax - xmin + 1), dtype=np.uint8)
         box[:, 0] = box[:, 0] - xmin
         box[:, 1] = box[:, 1] - ymin
-        cv2.fillPoly(mask, box.reshape(1, -1, 2).astype(np.int32), 1)
+        cv2.fillPoly(mask, box.reshape(1, -1, 2).astype(np.int32), 1)  # type: ignore
         return cv2.mean(
             bitmap[ymin : ymax + 1, xmin : xmax + 1].astype(np.float32), mask
         )[0]
@@ -50,7 +50,7 @@ class DBPostProcess:
     @staticmethod
     def get_mini_box(contour: np.ndarray):
         bbox = cv2.minAreaRect(contour)
-        points = sorted(list(cv2.boxPoints(bbox)), key=lambda x: x[0])
+        points = sorted(cv2.boxPoints(bbox).tolist(), key=lambda x: x[0])  # type: ignore
 
         if points[1][1] > points[0][1]:
             index_1 = 0
@@ -93,7 +93,6 @@ class DBPostProcess:
         # the marching squares algorithm
         # https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.find_contours
         # The rest could be implemented on CUDA (via numba or triton?)
-        bitmap = bitmap.astype(np.uint8)
         if self.use_dilation:
             bitmap = cv2.dilate(bitmap, self.dilation_kernel)
 
@@ -140,10 +139,15 @@ class DBPostProcess:
         input_width: int,
     ) -> List[np.ndarray]:
         preds = np.squeeze(preds, axis=1)
-        bit_maps = preds > self.thresh
+        bit_maps: np.ndarray = (preds > self.thresh).astype(np.uint8)
 
         boxes = [
-            self.bitmap_to_boxes(pred, bit_map, input_width, input_height)
+            self.bitmap_to_boxes(
+                pred=pred,
+                bitmap=bit_map,
+                input_width=input_width,
+                input_height=input_height,
+            )
             for pred, bit_map in zip(preds, bit_maps)
         ]
 

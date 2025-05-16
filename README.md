@@ -36,8 +36,7 @@ for result in results:
 #     OCRResult(
 #         text=...,
 #         confidence=...,
-#         box=...,
-#         boxes=[Box2D(top_left=Point(x, y), bottom_right=Point(x, y)), ...],
+#         box=Box2D(top_left=Point2D(x, y), bottom_right=Point2D(x, y)),
 #     ),
 #     OCRResult(..),
 #     ...

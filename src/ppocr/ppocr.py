@@ -33,8 +33,8 @@ class PPOCR:
         self.model_name = model_name
         self.threshold = threshold
 
-        self.detector = TextDetector(model_name=model_name, device=device)
-        self.recognizer = TextRecognizer(model_name=model_name, device=device)
+        self.detector = TextDetector(model_name=model_name, device=self.device)
+        self.recognizer = TextRecognizer(model_name=model_name, device=self.device)
 
     def predict_image(self, image: np.ndarray) -> list[OCRResult]:
         """

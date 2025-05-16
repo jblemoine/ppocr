@@ -39,14 +39,14 @@ def _crop_polygone(image: np.ndarray, polygone: np.ndarray):
     """
     img_crop_width = int(
         max(
-            np.linalg.norm(polygone[0] - polygone[1]),
-            np.linalg.norm(polygone[2] - polygone[3]),
+            float(np.linalg.norm(polygone[0] - polygone[1])),
+            float(np.linalg.norm(polygone[2] - polygone[3])),
         )
     )
     img_crop_height = int(
         max(
-            np.linalg.norm(polygone[0] - polygone[3]),
-            np.linalg.norm(polygone[1] - polygone[2]),
+            float(np.linalg.norm(polygone[0] - polygone[3])),
+            float(np.linalg.norm(polygone[1] - polygone[2])),
         )
     )
     pts_std = np.asarray(

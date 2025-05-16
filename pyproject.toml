@@ -21,7 +21,8 @@ dev = [
     "mypy",
     "pytest",
     "ruff",
-    "pre-commit"
+    "pre-commit",
+    "types-requests",
 ]
 
 [tool.ruff.lint]
