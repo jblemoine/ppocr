@@ -22,6 +22,12 @@ class Detection:
 
 
 @dataclass
+class Recognition:
+    text: str
+    confidence: float
+
+
+@dataclass
 class OCRResult:
     box: Box2D
     text: str

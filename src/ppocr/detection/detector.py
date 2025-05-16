@@ -11,7 +11,7 @@ from ppocr.detection.db_head import DBHead
 from ppocr.detection.db_postprocess import DBPostProcess
 from ppocr.models.mobilenet_v3 import MobileNetV3Det
 from ppocr.types import Box2D, Detection, Point2D
-from ppocr.utils import maybe_download_github_asset
+from ppocr.utils import load_module, maybe_download_github_asset
 
 
 def _polygone_to_box2d(polygone: np.ndarray) -> Box2D:
@@ -26,7 +26,7 @@ def _polygone_to_box2d(polygone: np.ndarray) -> Box2D:
     )
 
 
-def _crop_polygone(img: np.ndarray, polygone: np.ndarray):
+def _crop_polygone(image: np.ndarray, polygone: np.ndarray):
     """
     img_height, img_width = img.shape[0:2]
     left = int(np.min(points[:, 0]))
@@ -60,7 +60,7 @@ def _crop_polygone(img: np.ndarray, polygone: np.ndarray):
     )
     M = cv2.getPerspectiveTransform(polygone, pts_std)
     crop = cv2.warpPerspective(
-        img,
+        image,
         M,
         (img_crop_width, img_crop_height),
         borderMode=cv2.BORDER_REPLICATE,
@@ -100,6 +100,7 @@ weights_files = {
 class TextDetector:
     def __init__(self, model_name: str, device: str):
         self.device = device
+        self.limit_side_len = 960
 
         if model_name not in weights_files:
             raise ValueError(f"Model {model_name} not found")
@@ -108,10 +109,8 @@ class TextDetector:
             file_name=weights_files[model_name], output_dir=WEIGHTS_DIR
         )
         self.model = PPOCRv3TextDetector()
-        self.model.load_state_dict(
-            torch.load(weights_file_path, map_location=self.device, weights_only=False)
-        )
-        self.model.eval()
+        self.model = load_module(self.model, weights_file_path, self.device, eval=True)
+
         self.postprocess = DBPostProcess(
             thresh=0.3,
             box_thresh=0.6,
@@ -126,7 +125,6 @@ class TextDetector:
         )
 
         image = cv2.resize(image, (resize_width, resize_height))
-        image = image.transpose(2, 0, 1)
         image = image.astype(np.float32)
         image /= 255.0
 
@@ -135,7 +133,10 @@ class TextDetector:
         image -= mean
         image /= std
 
-        return image
+        tensor = torch.from_numpy(image).to(self.device)
+        tensor = tensor.unsqueeze(0).permute(0, 3, 1, 2)
+
+        return tensor
 
     @lru_cache()
     def _get_resize_dim(self, height: int, width: int):
@@ -144,11 +145,11 @@ class TextDetector:
         """
 
         # limit the max side
-        if max(height, width) > self.params.limit_side_len:
+        if max(height, width) > self.limit_side_len:
             if height > width:
-                ratio = float(self.params.limit_side_len) / height
+                ratio = float(self.limit_side_len) / height
             else:
-                ratio = float(self.params.limit_side_len) / width
+                ratio = float(self.limit_side_len) / width
         else:
             ratio = 1
 
@@ -162,13 +163,11 @@ class TextDetector:
 
     @torch.inference_mode()
     def predict(self, image: np.ndarray) -> list[Detection]:
-        preprocessed_image = self.preprocess(image)
-        tensor = torch.from_numpy(preprocessed_image).to(self.device)
-        tensor = tensor.unsqueeze(0)
+        tensor = self.preprocess(image)
         preds = self.model(tensor)
         polygones = self.postprocess(
             preds.cpu().numpy(), input_height=image.shape[0], input_width=image.shape[1]
-        )
+        )[0]
 
         detections = [
             Detection(
@@ -177,5 +176,4 @@ class TextDetector:
             )
             for polygone in polygones
         ]
-
         return detections

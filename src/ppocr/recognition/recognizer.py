@@ -10,8 +10,8 @@ from ppocr import WEIGHTS_DIR
 from ppocr.models.mobilenet_v1 import MobileNetV1Enhance
 from ppocr.recognition.ctc_head import CTCHead
 from ppocr.recognition.svtr import EncoderWithSVTR
-from ppocr.types import OCRResult
-from ppocr.utils import maybe_download_github_asset
+from ppocr.types import Recognition
+from ppocr.utils import load_module, maybe_download_github_asset
 
 
 class CTCPostProcessor:
@@ -96,13 +96,11 @@ class TextRecognizer:
     def __init__(
         self,
         model_name: str = "PP-OCRv3",
-        threshold: float = 0.50,
         device: str | None = None,
     ):
         self.device = device or "cuda" if torch.cuda.is_available() else "cpu"
         self.model_height = 32
         self.model_width = 320
-        self.threshold = threshold
 
         if model_name not in weights_files:
             raise ValueError(f"Model {model_name} not found")
@@ -114,31 +112,29 @@ class TextRecognizer:
             file_name=vocab_file[model_name], output_dir=WEIGHTS_DIR
         )
         self.model = PPOCRV3TextRecognizer()
-        self.model.load_state_dict(
-            torch.load(weights_file_path, map_location=self.device, weights_only=False)
-        )
-        self.model.eval()
+        self.model = load_module(self.model, weights_file_path, self.device, eval=True)
         self.postprocess = CTCPostProcessor(vocab_path=vocab_path, use_space_char=True)
 
     def _preprocess(self, image: np.ndarray) -> torch.Tensor:
         image = cv2.resize(image, (self.model_width, self.model_height))
-        image = image.transpose(2, 0, 1)
         image = image.astype(np.float32)
         image /= 255.0
-        image = image[np.newaxis, :, :, :]
         image -= 0.5
         image /= 0.5
-        return image
+        tensor = torch.from_numpy(image)
+        tensor = tensor.permute(2, 0, 1)
+        return tensor
+
+    def _preprocess_batch(self, crops: list[np.ndarray]) -> torch.Tensor:
+        return torch.stack([self._preprocess(crop) for crop in crops]).to(self.device)
 
     @torch.inference_mode()
-    def predict(self, crops: list[np.ndarray]) -> list[OCRResult]:
-        tensor = torch.stack([self._preprocess(crop) for crop in crops]).to(self.device)
+    def predict(self, crops: list[np.ndarray]) -> list[Recognition]:
+        tensor = self._preprocess_batch(crops)
         scores, feature = self.model(tensor)
         # feature are meant to be used later for traking across video frames
         results = self.postprocess(scores.cpu().numpy())
 
         return [
-            OCRResult(text=content, confidence=score, box=box)
-            for (content, score), box in zip(results, crops)
-            if score >= self.threshold
+            Recognition(text=content, confidence=score) for (content, score) in results
         ]
