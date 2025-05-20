@@ -9,7 +9,7 @@ from ppocr.types import OCRResult
 def test_ppocr():
     img_path = Path(__file__).parent / "data" / "english.png"
     image = cv2.imread(str(img_path))
-    ocr = PPOCR()
+    ocr = PPOCR(device="cpu")
     results = ocr.predict_image(image)
 
     assert isinstance(results, list)

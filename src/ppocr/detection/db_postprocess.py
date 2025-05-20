@@ -66,7 +66,8 @@ class DBPostProcess:
             index_3 = 2
 
         points_arr = np.asarray(
-            [points[index_1], points[index_2], points[index_3], points[index_4]]
+            [points[index_1], points[index_2], points[index_3], points[index_4]],
+            dtype=np.float32,
         )
         min_size = min(bbox[1])
         return points_arr, min_size
